@@ -408,7 +408,7 @@ struct SelectionSetTemplate {
             get { \(getter) }
             _modify { var f = \(propertyName); yield &f; \(
                 if: isOptional,
-    "if let newData = f?.__data { __data = newData }",
+            "if let newData = f?.__data { __data = newData }",
                 else: "__data = f.__data"
             ) }
             @available(*, unavailable, message: "mutate properties of the fragment instead.")
