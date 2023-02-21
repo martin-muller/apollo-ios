@@ -1,8 +1,8 @@
 # 🔮 Apollo iOS Roadmap
 
-**Last updated: Dec 2022**
+**Last updated: 2023-01-30**
 
-For up to date release notes, refer to the project's [Change Log](https://github.com/apollographql/apollo-ios/blob/main/CHANGELOG.md).
+For up to date release notes, refer to the project's [Changelog](https://github.com/apollographql/apollo-ios/blob/main/CHANGELOG.md).
 
 > **Please note:** This is an approximation of **larger effort** work planned for the next 6 - 12 months. It does not cover all new functionality that will be added, and nothing here is set in stone. Also note that each of these releases, and several patch releases in-between, will include bug fixes (based on issue triaging) and community submitted PR's.
 
@@ -13,19 +13,44 @@ For up to date release notes, refer to the project's [Change Log](https://github
 
 ---
 
-## 1.x.x releases
+## [1.x.x patch releases](https://github.com/apollographql/apollo-ios/milestone/70)
 
-We are releasing a series of patch releases to introduce improvements to our 1.0 release. please see our [GitHub Milestones](https://github.com/apollographql/apollo-ios/milestones) for more details.
+Please see our [patch releases milestone](https://github.com/apollographql/apollo-ios/milestone/70) for more information about the fixes and enhancements we plan to ship in the near future.  Anything labeled [`planned-next`](https://github.com/apollographql/apollo-ios/labels/planned-next) is slated for the next patch release.  1.0.7 is likely going to be our last patch for 1.0.
 
-## 1.1
+## 1.x: `@defer` support
 
-Release 1.1 will be the next minor release and will contain misc improvements now that 1.0 is GA. See Github [1.1 Milestone](https://github.com/apollographql/apollo-ios/milestone/64) for more details.
+_Approximate Date: TBD_
 
-## 1.2
+The `@defer` directive enables your queries to receive data for specific fields asynchronously. This is helpful whenever some fields in a query take much longer to resolve than others.  [Apollo Kotlin](https://www.apollographql.com/docs/kotlin/fetching/defer/) and [Apollo Client (web)](https://www.apollographql.com/docs/react/data/defer/) currently support this syntax, so if you're interested in learning more check out their documentation.  Apollo iOS will release support for this directive in a `1.x` minor version.  More details TBD.
 
-Release 1.2 will focus on code gen performance and hoisted/shared types, as well code gen configuration options. See Github [1.2 Milestone](https://github.com/apollographql/apollo-ios/milestone/67) for more details.
+## [1.1: Generated operation model creation](https://github.com/apollographql/apollo-ios/milestone/64)
 
-## 2.0
+_Approximate Date: 2023-02-21_
+
+- The ability to initialize fragment (and maybe selection set) models in a type-safe way
+- Initialize mutable selection sets to add to the cache via local cache mutations (Currently you can only mutate fields on existing entities)
+- Create API for clearing individual fields on entities from the cache in local cache mutations.
+
+
+## [1.2: Improve fragment merging and code generation performance](https://github.com/apollographql/apollo-ios/milestone/67)
+
+_Approximate Date: 2023-03-30_
+
+- Add configuration for disabling merging of fragment fields
+- Recognize when multiple selection set types will end up being identical and use a shared model object with typealiases to reduce generated code
+- Fix retain cycles and memory issues causing code generation to take very long on certain large, complex schemas with deeply nested fragment composition
+- Optimize code generation performance by parallelizing computation and rendering of files
+
+## [1.3: Reduce generated schema types](https://github.com/apollographql/apollo-ios/milestone/71)
+
+_Approximate Date: 2023-04-27_
+
+- Right now we are naively generating schema types that we don't always need. A smarter algorithm can reduce generated code for certain large schemas that are currently having every type in their schema generated
+- Create configuration for manually indicating schema types you would like to have schema types and TestMocks generated for
+
+## [2.0](https://github.com/apollographql/apollo-ios/milestone/60)
+
+_Approximate Date: TBD_
 
 These are the major initiatives planned for 2.0/2.x:
 
@@ -33,9 +58,9 @@ These are the major initiatives planned for 2.0/2.x:
   - The [updated network stack](https://github.com/apollographql/apollo-ios/issues/1340) solved a number of long standing issues with the old barebones NetworkTransport but still has limitations and is complicated to use. Adopting patterns that have proven useful for the web client, such as Apollo Link, will provide more flexibility and give developers full control over the steps that are invoked to satisfy requests.
   - We would love to bring some of the new Swift concurrency features, such as async/await, to Apollo iOS but that depends on the Swift team's work for backwards deployment of the concurrency library. It may involve Apollo iOS dropping support for macOS 10.14 and iOS 12.
 
-See Github [2.0 Milestone](https://github.com/apollographql/apollo-ios/milestone/60) for more details.
-
 ## 3.0
+
+_Approximate Date: TBD_
 
 These are the major initiatives planned for 3.0/3.x:
 
@@ -46,12 +71,3 @@ These are the major initiatives planned for 3.0/3.x:
   - Cache metadata. Ability to add per-field metadata if needed, to allow for TTL and time-based invalidation, etc.
 
 This major release is still in pre-planning, more details will come in the future.
-
-## Future
-
-These are subject to change and anything that dramatically changes APIs or breaks backwards compatibility with versions will be reserved for the next major version.
-
-- **@defer directive support**: the @defer directive enables your queries to receive data for specific fields asynchronously. This is helpful whenever some fields in a query take much longer to resolve than the others.
-
-- **Wrapper libraries**: A very highly voted suggestion in our fall 2019 developer survey was wrapper libraries for concurrency helpers like RxSwift, Combine, PromiseKit, etc.
-  - Note that we are **not** locked into any particular set of other dependencies to support yet, but we anticipate these will be wrappers in a separate repository that have Apollo as a dependency. As individual wrappers move into nearer-term work, we'll outline which specific ones we'll be supporting.

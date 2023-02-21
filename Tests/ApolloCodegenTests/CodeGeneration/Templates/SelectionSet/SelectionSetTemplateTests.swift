@@ -751,6 +751,7 @@ class SelectionSetTemplateTests: XCTestCase {
       do: String!
       else: String!
       fallthrough: String!
+      for: String!
       guard: String!
       if: String!
       in: String!
@@ -810,6 +811,7 @@ class SelectionSetTemplateTests: XCTestCase {
         do
         else
         fallthrough
+        for
         guard
         if
         in
@@ -869,6 +871,7 @@ class SelectionSetTemplateTests: XCTestCase {
         .field("do", String.self),
         .field("else", String.self),
         .field("fallthrough", String.self),
+        .field("for", String.self),
         .field("guard", String.self),
         .field("if", String.self),
         .field("in", String.self),
@@ -975,6 +978,7 @@ class SelectionSetTemplateTests: XCTestCase {
       protocol: Animal!
       type: Animal!
       species: String!
+      _: Animal!
     }
     """
 
@@ -1029,6 +1033,9 @@ class SelectionSetTemplateTests: XCTestCase {
         type {
           species
         }
+        _ {
+          species
+        }
       }
     }
     """
@@ -1051,6 +1058,7 @@ class SelectionSetTemplateTests: XCTestCase {
         .field("any", Any_SelectionSet.self),
         .field("protocol", Protocol_SelectionSet.self),
         .field("type", Type_SelectionSet.self),
+        .field("_", __SelectionSet.self),
       ] }
     """
 
@@ -2126,6 +2134,7 @@ class SelectionSetTemplateTests: XCTestCase {
       do: String!
       else: String!
       fallthrough: String!
+      for: String!
       guard: String!
       if: String!
       in: String!
@@ -2185,6 +2194,7 @@ class SelectionSetTemplateTests: XCTestCase {
         do
         else
         fallthrough
+        for
         guard
         if
         in
@@ -2242,6 +2252,7 @@ class SelectionSetTemplateTests: XCTestCase {
       public var `do`: String { __data["do"] }
       public var `else`: String { __data["else"] }
       public var `fallthrough`: String { __data["fallthrough"] }
+      public var `for`: String { __data["for"] }
       public var `guard`: String { __data["guard"] }
       public var `if`: String { __data["if"] }
       public var `in`: String { __data["in"] }
@@ -4199,7 +4210,7 @@ class SelectionSetTemplateTests: XCTestCase {
     let actual = subject.render(field: allAnimals)
 
     // then
-    expect(actual).to(equalLineByLine(expected, atLine: 15, ignoringExtraLines: true))
+    expect(actual).to(equalLineByLine(expected, atLine: 11, ignoringExtraLines: true))
   }
 
   func test__render_fragmentAccessor__givenFragmentOnSameTypeWithInclusionConditionThatPartiallyMatchesScope_rendersFragmentAccessorAsOptionalWithConditions() throws {
