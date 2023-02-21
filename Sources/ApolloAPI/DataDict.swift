@@ -61,7 +61,7 @@ extension AnySelectionSet {
 
 extension Optional: SelectionSetEntityValue where Wrapped: SelectionSetEntityValue {
   @inlinable public init(fieldData: AnyHashable?, variables: GraphQLOperation.Variables?) {
-    guard fieldData?.base != nil, case let .some(fieldData) = fieldData else {
+    guard case .some = fieldData?.base, case let .some(fieldData) = fieldData else {
       self = .none
       return
     }
