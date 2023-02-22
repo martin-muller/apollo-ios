@@ -139,7 +139,7 @@ struct SelectionSetTemplate {
            \(fields.values.map { ArgTemplate($0, in: scope) }, separator: ",\n")
         ) {
           self.__data = DataDict(["__typename" : "\(selectionSet.parentType.name.firstUppercased)"], variables: nil)
-          \(fields.values.map { ArgAssignTemplate($0) }, separator: ",\n")
+          \(fields.values.map { ArgAssignTemplate($0) }, separator: "\n")
         }
         """
   }
