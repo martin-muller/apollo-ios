@@ -121,6 +121,14 @@ struct SelectionSetTemplate {
         """
   }
   
+//  \(ifLet: selections.direct?.fields.values, {
+//    "\($0.map { ArgTemplate($0, in: scope) }, separator: ",\n")"
+//  })
+  
+//  \(ifLet: selections.direct?.fields.values, {
+//    "\($0.map { ArgAssignTemplate($0) }, separator: "\n")"
+//  })
+  
   private func ArgInitializerTemplate(
     _ selectionSet: IR.SelectionSet,
     _ selections: IR.SelectionSet.Selections,
@@ -128,14 +136,10 @@ struct SelectionSetTemplate {
   ) -> TemplateString {
         """
         public init(
-        \(ifLet: selections.direct?.fields.values, {
-          "\($0.map { ArgTemplate($0, in: scope) }, separator: ",\n")"
-        })
+           \(selections.merged.fields.values.map { ArgTemplate($0, in: scope) }, separator: ",\n")
         ) {
           self.__data = DataDict(["__typename" : "\(selectionSet.parentType.name.firstUppercased)"], variables: nil)
-          \(ifLet: selections.direct?.fields.values, {
-            "\($0.map { ArgAssignTemplate($0) }, separator: "\n")"
-          })
+          \(selections.merged.fields.values.map { ArgAssignTemplate($0) }, separator: ",\n")
         }
         """
   }
