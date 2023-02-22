@@ -149,7 +149,7 @@ struct SelectionSetTemplate {
       return !scope.matches(conditions)
     }()
     return """
-              \(field.responseKey.firstLowercased.asFieldAccessorPropertyName): \(self.typeName(for: field, forceOptional: isConditionallyIncluded))
+              \(field.responseKey.firstLowercased.asFieldAccessorPropertyName): \(self.typeName(for: field, forceOptional: isConditionallyIncluded, nilDefault: true))
         """
   }
   
@@ -241,7 +241,7 @@ struct SelectionSetTemplate {
         """
   }
   
-  private func typeName(for field: IR.Field, forceOptional: Bool = false) -> String {
+  private func typeName(for field: IR.Field, forceOptional: Bool = false, nilDefault: Bool = false) -> String {
     let fieldName: String
     switch field {
     case let scalarField as IR.ScalarField:
@@ -255,7 +255,11 @@ struct SelectionSetTemplate {
     }
     
     if case .nonNull = field.type, forceOptional {
-      return "\(fieldName)?"
+      if nilDefault {
+        return "\(fieldName)? = nil"
+      } else {
+        return "\(fieldName)?"
+      }
     } else {
       return fieldName
     }
