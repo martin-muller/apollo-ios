@@ -1,4 +1,5 @@
 import InflectorKit
+import OrderedCollections
 
 struct SelectionSetTemplate {
   
@@ -121,25 +122,24 @@ struct SelectionSetTemplate {
         """
   }
   
-//  \(ifLet: selections.direct?.fields.values, {
-//    "\($0.map { ArgTemplate($0, in: scope) }, separator: ",\n")"
-//  })
-  
-//  \(ifLet: selections.direct?.fields.values, {
-//    "\($0.map { ArgAssignTemplate($0) }, separator: "\n")"
-//  })
-  
   private func ArgInitializerTemplate(
     _ selectionSet: IR.SelectionSet,
     _ selections: IR.SelectionSet.Selections,
     in scope: IR.ScopeDescriptor
   ) -> TemplateString {
-        """
+    let fields: OrderedDictionary<String, IR.Field>
+    if let direct = selections.direct {
+      fields = direct.fields.merging(selections.merged.fields) { first, second in first }
+    } else {
+      fields = selections.merged.fields
+    }
+    
+        return """
         public init(
-           \(selections.merged.fields.values.map { ArgTemplate($0, in: scope) }, separator: ",\n")
+           \(fields.values.map { ArgTemplate($0, in: scope) }, separator: ",\n")
         ) {
           self.__data = DataDict(["__typename" : "\(selectionSet.parentType.name.firstUppercased)"], variables: nil)
-          \(selections.merged.fields.values.map { ArgAssignTemplate($0) }, separator: ",\n")
+          \(fields.values.map { ArgAssignTemplate($0) }, separator: ",\n")
         }
         """
   }
