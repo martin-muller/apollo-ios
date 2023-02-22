@@ -97,7 +97,7 @@ struct SelectionSetTemplate {
     return """
         \(self.DataFieldAndInitializerTemplate())
         
-        \(self.ArgInitializerTemplate(selections, in: scope))
+        \(self.ArgInitializerTemplate(selectionSet, selections, in: scope))
         
         \(self.ParentTypeTemplate(selectionSet.parentType))
         \(ifLet: selections.direct?.groupedByInclusionCondition, { SelectionsTemplate($0, in: scope) })
@@ -122,6 +122,7 @@ struct SelectionSetTemplate {
   }
   
   private func ArgInitializerTemplate(
+    _ selectionSet: IR.SelectionSet,
     _ selections: IR.SelectionSet.Selections,
     in scope: IR.ScopeDescriptor
   ) -> TemplateString {
@@ -131,7 +132,7 @@ struct SelectionSetTemplate {
           "\($0.map { ArgTemplate($0, in: scope) }, separator: ",\n")"
         })
         ) {
-          self.__data = DataDict([:], variables: nil)
+          self.__data = DataDict(["__typename" : \(selectionSet.parentType.name.firstUppercased)], variables: nil)
           \(ifLet: selections.direct?.fields.values, {
             "\($0.map { ArgAssignTemplate($0) }, separator: "\n")"
           })
