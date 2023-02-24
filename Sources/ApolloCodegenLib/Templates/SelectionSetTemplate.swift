@@ -96,7 +96,7 @@ struct SelectionSetTemplate {
     let selections = selectionSet.selections
     let scope = selectionSet.typeInfo.scope
     return """
-        \(self.DataFieldAndInitializerTemplate())
+        \(self.DataFieldAndInitializerTemplate(selectionSet))
         
         \(self.ArgInitializerTemplate(selectionSet, selections, in: scope))
         
@@ -107,7 +107,7 @@ struct SelectionSetTemplate {
         
         \(section: self.InlineFragmentAccessorsTemplate(selections))
         
-        \(section: self.FragmentAccessorsTemplate(selections, in: scope))
+        \(section: self.FragmentAccessorsTemplate(selectionSet, selections, in: scope))
         
         \(section: self.ChildEntityFieldSelectionSets(selections))
         
@@ -115,10 +115,13 @@ struct SelectionSetTemplate {
         """
   }
   
-  private func DataFieldAndInitializerTemplate() -> String {
+  private func DataFieldAndInitializerTemplate(_ selectionSet: IR.SelectionSet) -> String {
         """
         public \(self.isMutable ? "var" : "let") __data: DataDict
-        public init(data: DataDict) { __data = data }
+        public init(data: DataDict) {
+          __data = data
+          __data["__typename"] = "\(selectionSet.parentType.name.firstUppercased)"
+        }
         """
   }
   
@@ -373,6 +376,7 @@ struct SelectionSetTemplate {
   }
   
   private func FragmentAccessorsTemplate(
+    _ selectionSet: IR.SelectionSet,
     _ selections: IR.SelectionSet.Selections,
     in scope: IR.ScopeDescriptor
   ) -> TemplateString {
@@ -383,7 +387,7 @@ struct SelectionSetTemplate {
     
     return """
         public struct Fragments: FragmentContainer {
-          \(self.DataFieldAndInitializerTemplate())
+          \(self.DataFieldAndInitializerTemplate(selectionSet))
         
           \(ifLet: selections.direct?.fragments.values, {
             "\($0.map { FragmentAccessorTemplate($0, in: scope) }, separator: "\n")"
