@@ -16,7 +16,7 @@ struct SelectionSetTemplate {
     config: ApolloCodegen.ConfigurationContext
   ) {
     self.definition = definition
-    self.isMutable = definition.isMutable
+    self.isMutable = true//definition.isMutable
     self.generateInitializers = generateInitializers
     self.config = config
 
