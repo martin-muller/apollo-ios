@@ -37,7 +37,7 @@ class SelectionSetTemplateTests: XCTestCase {
     ir = try .mock(schema: schemaSDL, document: document)
     let operationDefinition = try XCTUnwrap(ir.compilationResult[operation: operationName])
     operation = ir.build(operation: operationDefinition)
-    let config = ApolloCodegenConfiguration.mock(
+    let config = ApolloCodegen.ConfigurationContext(config: .mock(
       schemaNamespace: "TestSchema",
       output: configOutput,
       options: .init(
@@ -46,11 +46,17 @@ class SelectionSetTemplateTests: XCTestCase {
         cocoapodsCompatibleImportStatements: cocoapodsImportStatements,
         warningsOnDeprecatedUsage: warningsOnDeprecatedUsage
       )
+    ))
+    let mockTemplateRenderer = MockTemplateRenderer(
+      target: .operationFile,
+      template: "",
+      config: config
     )
     subject = SelectionSetTemplate(
       definition: .operation(self.operation),
       generateInitializers: false,
-      config: ApolloCodegen.ConfigurationContext(config: config)
+      config: config,
+      renderAccessControl: mockTemplateRenderer.accessControlModifier(for: .member)
     )
   }
 
@@ -495,6 +501,45 @@ class SelectionSetTemplateTests: XCTestCase {
     // then
     expect(actual).to(equalLineByLine(expected, atLine: 7, ignoringExtraLines: true))
   }
+  
+  func test__render_selections__givenAllUppercase_generatesCorrectCasing() throws {
+    // given
+    schemaSDL = """
+    type Query {
+      allAnimals: [Animal!]
+    }
+
+    type Animal {
+      FIELDNAME: String
+    }
+    """
+
+    document = """
+    query TestOperation {
+      allAnimals {
+        FIELDNAME
+      }
+    }
+    """
+
+    let expected = """
+      public static var __selections: [ApolloAPI.Selection] { [
+        .field("__typename", String.self),
+        .field("FIELDNAME", String?.self),
+      ] }
+    """
+
+    // when
+    try buildSubjectAndOperation()
+    let allAnimals = try XCTUnwrap(
+      operation[field: "query"]?[field: "allAnimals"] as? IR.EntityField
+    )
+
+    let actual = subject.render(field: allAnimals)
+
+    // then
+    expect(actual).to(equalLineByLine(expected, atLine: 7, ignoringExtraLines: true))
+  }
 
   func test__render_selections__givenCustomScalar_rendersFieldSelectionsWithNamespaceInAllConfigurations() throws {
     // given
@@ -539,15 +584,15 @@ class SelectionSetTemplateTests: XCTestCase {
     """
 
     let tests: [ApolloCodegenConfiguration.FileOutput] = [
-      .mock(moduleType: .swiftPackageManager, operations: .relative(subpath: nil)),
-      .mock(moduleType: .swiftPackageManager, operations: .absolute(path: "custom")),
+      .mock(moduleType: .swiftPackageManager, operations: .relative(subpath: nil, accessModifier: .public)),
+      .mock(moduleType: .swiftPackageManager, operations: .absolute(path: "custom", accessModifier: .public)),
       .mock(moduleType: .swiftPackageManager, operations: .inSchemaModule),
-      .mock(moduleType: .other, operations: .relative(subpath: nil)),
-      .mock(moduleType: .other, operations: .absolute(path: "custom")),
+      .mock(moduleType: .other, operations: .relative(subpath: nil, accessModifier: .public)),
+      .mock(moduleType: .other, operations: .absolute(path: "custom", accessModifier: .public)),
       .mock(moduleType: .other, operations: .inSchemaModule),
-      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .relative(subpath: nil)),
-      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .absolute(path: "custom")),
-      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .inSchemaModule)
+      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .relative(subpath: nil, accessModifier: .public)),
+      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .absolute(path: "custom", accessModifier: .public)),
+      .mock(moduleType: .embeddedInTarget(name: "CustomTarget", accessModifier: .public), operations: .inSchemaModule)
     ]
 
     for test in tests {
@@ -610,15 +655,15 @@ class SelectionSetTemplateTests: XCTestCase {
     """
 
     let tests: [ApolloCodegenConfiguration.FileOutput] = [
-      .mock(moduleType: .swiftPackageManager, operations: .relative(subpath: nil)),
-      .mock(moduleType: .swiftPackageManager, operations: .absolute(path: "custom")),
+      .mock(moduleType: .swiftPackageManager, operations: .relative(subpath: nil, accessModifier: .public)),
+      .mock(moduleType: .swiftPackageManager, operations: .absolute(path: "custom", accessModifier: .public)),
       .mock(moduleType: .swiftPackageManager, operations: .inSchemaModule),
-      .mock(moduleType: .other, operations: .relative(subpath: nil)),
-      .mock(moduleType: .other, operations: .absolute(path: "custom")),
+      .mock(moduleType: .other, operations: .relative(subpath: nil, accessModifier: .public)),
+      .mock(moduleType: .other, operations: .absolute(path: "custom", accessModifier: .public)),
       .mock(moduleType: .other, operations: .inSchemaModule),
-      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .relative(subpath: nil)),
-      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .absolute(path: "custom")),
-      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .inSchemaModule)
+      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .relative(subpath: nil, accessModifier: .public)),
+      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .absolute(path: "custom", accessModifier: .public)),
+      .mock(moduleType: .embeddedInTarget(name: "CustomTarget", accessModifier: .public), operations: .inSchemaModule)
     ]
 
     for test in tests {
@@ -2275,15 +2320,15 @@ class SelectionSetTemplateTests: XCTestCase {
     """
 
     let tests: [ApolloCodegenConfiguration.FileOutput] = [
-      .mock(moduleType: .swiftPackageManager, operations: .relative(subpath: nil)),
-      .mock(moduleType: .swiftPackageManager, operations: .absolute(path: "custom")),
+      .mock(moduleType: .swiftPackageManager, operations: .relative(subpath: nil, accessModifier: .public)),
+      .mock(moduleType: .swiftPackageManager, operations: .absolute(path: "custom", accessModifier: .public)),
       .mock(moduleType: .swiftPackageManager, operations: .inSchemaModule),
-      .mock(moduleType: .other, operations: .relative(subpath: nil)),
-      .mock(moduleType: .other, operations: .absolute(path: "custom")),
+      .mock(moduleType: .other, operations: .relative(subpath: nil, accessModifier: .public)),
+      .mock(moduleType: .other, operations: .absolute(path: "custom", accessModifier: .public)),
       .mock(moduleType: .other, operations: .inSchemaModule),
-      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .relative(subpath: nil)),
-      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .absolute(path: "custom")),
-      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .inSchemaModule)
+      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .relative(subpath: nil, accessModifier: .public)),
+      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .absolute(path: "custom", accessModifier: .public)),
+      .mock(moduleType: .embeddedInTarget(name: "CustomTarget", accessModifier: .public), operations: .inSchemaModule)
     ]
 
     for test in tests {
@@ -2343,15 +2388,15 @@ class SelectionSetTemplateTests: XCTestCase {
     """
 
     let tests: [ApolloCodegenConfiguration.FileOutput] = [
-      .mock(moduleType: .swiftPackageManager, operations: .relative(subpath: nil)),
-      .mock(moduleType: .swiftPackageManager, operations: .absolute(path: "custom")),
+      .mock(moduleType: .swiftPackageManager, operations: .relative(subpath: nil, accessModifier: .public)),
+      .mock(moduleType: .swiftPackageManager, operations: .absolute(path: "custom", accessModifier: .public)),
       .mock(moduleType: .swiftPackageManager, operations: .inSchemaModule),
-      .mock(moduleType: .other, operations: .relative(subpath: nil)),
-      .mock(moduleType: .other, operations: .absolute(path: "custom")),
+      .mock(moduleType: .other, operations: .relative(subpath: nil, accessModifier: .public)),
+      .mock(moduleType: .other, operations: .absolute(path: "custom", accessModifier: .public)),
       .mock(moduleType: .other, operations: .inSchemaModule),
-      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .relative(subpath: nil)),
-      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .absolute(path: "custom")),
-      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .inSchemaModule)
+      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .relative(subpath: nil, accessModifier: .public)),
+      .mock(moduleType: .embeddedInTarget(name: "CustomTarget"), operations: .absolute(path: "custom", accessModifier: .public)),
+      .mock(moduleType: .embeddedInTarget(name: "CustomTarget", accessModifier: .public), operations: .inSchemaModule)
     ]
 
     for test in tests {
@@ -2392,6 +2437,42 @@ class SelectionSetTemplateTests: XCTestCase {
 
     let expected = """
       public var fieldName: String { __data["FieldName"] }
+    """
+
+    // when
+    try buildSubjectAndOperation()
+    let allAnimals = try XCTUnwrap(
+      operation[field: "query"]?[field: "AllAnimals"] as? IR.EntityField
+    )
+
+    let actual = subject.render(field: allAnimals)
+
+    // then
+    expect(actual).to(equalLineByLine(expected, atLine: 12, ignoringExtraLines: true))
+  }
+  
+  func test__render_fieldAccessors__givenFieldWithAllUpperCaseName_rendersFieldAccessorWithLowercaseName() throws {
+    // given
+    schemaSDL = """
+    type Query {
+      AllAnimals: [Animal!]
+    }
+
+    type Animal {
+      FIELDNAME: String!
+    }
+    """
+
+    document = """
+    query TestOperation {
+      AllAnimals {
+        FIELDNAME
+      }
+    }
+    """
+
+    let expected = """
+      public var fieldname: String { __data["FIELDNAME"] }
     """
 
     // when
@@ -4068,6 +4149,8 @@ class SelectionSetTemplateTests: XCTestCase {
     // then
     expect(actual).to(equalLineByLine(expected, atLine: 8, ignoringExtraLines: true))
   }
+  
+  
 
   // MARK: - Inline Fragment Accessors
 
@@ -5949,6 +6032,153 @@ class SelectionSetTemplateTests: XCTestCase {
     )
 
     let actual = subject.render(inlineFragment: predators_asPet)
+
+    // then
+    expect(actual).to(equalLineByLine(expected, atLine: 1, ignoringExtraLines: true))
+  }
+
+  func test__render_conditionalFragmentOnQueryRoot__rendersRootEntityType() throws {
+    // given
+    schemaSDL = """
+    type Query {
+      name: String!
+    }
+    """
+
+    document = """
+    query TestOperation($a: Boolean!) {
+      ...Details @include(if: $a)
+    }
+
+    fragment Details on Query {
+      name
+    }
+    """
+
+    let expected = """
+    /// IfA
+    public struct IfA: TestSchema.InlineFragment {
+      public let __data: DataDict
+      public init(_dataDict: DataDict) { __data = _dataDict }
+
+      public typealias RootEntityType = TestOperationQuery.Data
+    """
+    
+    // when
+    try buildSubjectAndOperation()
+    let query_ifA = try XCTUnwrap(
+      operation[field: "query"]?[if: "a"]
+    )
+
+    let actual = subject.render(inlineFragment: query_ifA)
+
+    // then
+    expect(actual).to(equalLineByLine(expected, atLine: 1, ignoringExtraLines: true))
+  }
+
+  func test__render_conditionalTypeCaseFragmentOnQueryRoot__rendersRootEntityType() throws {
+    // given
+    schemaSDL = """
+    type Query {
+      name: String!
+    }
+
+    interface AdminQuery {
+      adminName: String!
+    }
+    """
+
+    document = """
+    query TestOperation($a: Boolean!) {
+      ...AdminDetails @include(if: $a)
+    }
+
+    fragment AdminDetails on AdminQuery {
+      adminName
+    }
+    """
+
+    let expected = """
+    /// AsAdminQueryIfA
+    public struct AsAdminQueryIfA: TestSchema.InlineFragment {
+      public let __data: DataDict
+      public init(_dataDict: DataDict) { __data = _dataDict }
+
+      public typealias RootEntityType = TestOperationQuery.Data
+    """
+
+    // when
+    try buildSubjectAndOperation()
+    let query_ifA = try XCTUnwrap(
+      operation[field: "query"]?[as: "AdminQuery", if: "a"]
+    )
+
+    let actual = subject.render(inlineFragment: query_ifA)
+
+    // then
+    expect(actual).to(equalLineByLine(expected, atLine: 1, ignoringExtraLines: true))
+  }
+
+  func test__render_typeCaseInFragmentOnQueryRoot__rendersRootEntityTypeNamespacedToFragment() throws {
+    // given
+    schemaSDL = """
+    type Query {
+      predators: [Animal!]
+    }
+
+    interface Animal {
+      species: String!
+      predators: [Animal!]
+    }
+
+    interface Pet {
+      name: String!
+    }
+    """
+
+    document = """
+    query TestOperation {
+      ...Details
+    }
+
+    fragment Details on Query {
+      predators {
+        predators {
+          ... on Pet {
+            name
+          }
+        }
+      }
+    }
+    """
+
+    let expected = """
+    /// Predator.Predator.AsPet
+    public struct AsPet: TestSchema.InlineFragment {
+      public let __data: DataDict
+      public init(_dataDict: DataDict) { __data = _dataDict }
+
+      public typealias RootEntityType = Details.Predator.Predator
+    """
+
+    // when
+    try buildSubjectAndOperation()
+    let detailsFragment = try XCTUnwrap(
+      operation[fragment: "Details"]
+    )
+    let detailsFragment_predators_predators_asPet = try XCTUnwrap(
+      detailsFragment.fragment.rootField
+        .selectionSet[field: "predators"]?[field: "predators"]?[as: "Pet"]
+    )
+
+    let fragmentTemplate = SelectionSetTemplate(
+      definition: .namedFragment(detailsFragment.fragment),
+      generateInitializers: false,
+      config: self.subject.config,
+      renderAccessControl: self.subject.renderAccessControl()
+    )
+
+    let actual = fragmentTemplate.render(inlineFragment: detailsFragment_predators_predators_asPet)
 
     // then
     expect(actual).to(equalLineByLine(expected, atLine: 1, ignoringExtraLines: true))
